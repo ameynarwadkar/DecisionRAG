@@ -6,6 +6,18 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
+# Virtual environments & secrets
 .venv
 .env
+
+# Local databases & test caches
+*.db
+*.sqlite
+*.sqlite3
+.pytest_cache/
+
+# Frontend dependencies & local specs
+frontend/node_modules/
+docs/
+
+docs/

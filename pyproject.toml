@@ -1,7 +1,7 @@
 [project]
 name = "dec-rag"
 version = "0.1.0"
-description = "Add your description here"
+description = "Retriever-free document navigation backend inspired by arXiv:2610.35868"
 readme = "README.md"
 authors = [
     { name = "ameynarwadkar", email = "amey.cmyo@gmail.com" }
@@ -13,7 +13,7 @@ dependencies = [
     "fastapi>=0.163.1",
     "httpx>=0.28.1",
     "litellm>=1.109.1",
-    "pgvector>=0.5.1",
+    "numpy>=2.0.0",
     "pydantic>=2.14.3",
     "pydantic-settings>=2.16.3",
     "pypdf>=7.1.0",
@@ -34,3 +34,8 @@ dev = [
     "pytest>=9.2.0",
     "pytest-asyncio>=1.5.0",
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
