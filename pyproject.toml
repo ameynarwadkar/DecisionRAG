@@ -1,0 +1,36 @@
+[project]
+name = "dec-rag"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ameynarwadkar", email = "amey.cmyo@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "asyncpg>=0.32.0",
+    "fastapi>=0.163.1",
+    "httpx>=0.28.1",
+    "litellm>=1.109.1",
+    "pgvector>=0.5.1",
+    "pydantic>=2.14.3",
+    "pydantic-settings>=2.16.3",
+    "pypdf>=7.1.0",
+    "python-multipart>=0.0.34",
+    "sqlalchemy[asyncio]>=2.1.9",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+dec-rag = "dec_rag:main"
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.5.0",
+]
