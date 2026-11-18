@@ -389,20 +389,64 @@ button:disabled {
   overflow-y: auto;
 }
 
-.arch-container {
+.arch-shell {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   width: 100%;
-  padding: 6px 0 12px;
-  border-bottom: 1px solid var(--fg);
+  flex-shrink: 0;
+}
+
+.arch-shell-dragging {
+  user-select: none;
+}
+
+.arch-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.arch-viewport {
+  display: flex;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 0 10px;
 }
 
 .arch-svg {
   width: 100%;
-  max-width: 1020px;
+  max-height: 226px;
   height: auto;
+  margin: 0 auto;
   display: block;
   overflow: visible;
+}
+
+.arch-resize-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 9px;
+  cursor: ns-resize;
+  border-bottom: 1px solid var(--fg);
+  touch-action: none;
+  user-select: none;
+}
+
+.arch-resize-grip {
+  width: 34px;
+  height: 3px;
+  border-top: 1px solid var(--fg);
+  border-bottom: 1px solid var(--fg);
+  opacity: 0.55;
+}
+
+.arch-resize-handle:hover .arch-resize-grip,
+.arch-shell-dragging .arch-resize-grip {
+  opacity: 1;
+  width: 48px;
 }
 
 .arch-line {

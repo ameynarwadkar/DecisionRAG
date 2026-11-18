@@ -1,3 +1,10 @@
+import { type CSSProperties, useRef, useState } from "react";
+import {
+  ARCH_ASPECT_RATIO,
+  clampArchHeight,
+  loadLayoutPrefs,
+  updateLayoutPrefs,
+} from "../layoutPrefs";
 import type { JudgeId, PipelineStepId } from "../types";
 
 interface PipelineBarProps {
@@ -111,6 +118,67 @@ function ArrowHead({
 }
 
 export function PipelineBar({ activeStep, judge, hasNotepad }: PipelineBarProps) {
+  const [archHeight, setArchHeight] = useState<number | null>(
+    () => loadLayoutPrefs().archHeight
+  );
+  const [dragging, setDragging] = useState(false);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const dragOriginRef = useRef<{
+    startY: number;
+    startHeight: number;
+    moved: boolean;
+  } | null>(null);
+
+  const handleResetSize = () => {
+    setArchHeight(null);
+    updateLayoutPrefs({ archHeight: null });
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const measuredHeight =
+      archHeight ??
+      Math.round(svgRef.current?.getBoundingClientRect().height || 180);
+    dragOriginRef.current = {
+      startY: e.clientY,
+      startHeight: measuredHeight,
+      moved: false,
+    };
+    setDragging(true);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const origin = dragOriginRef.current;
+    if (!origin) return;
+    const deltaY = e.clientY - origin.startY;
+    if (!origin.moved && Math.abs(deltaY) < 2) return;
+    origin.moved = true;
+    const next = clampArchHeight(origin.startHeight + deltaY);
+    if (next !== null) {
+      setArchHeight(next);
+    }
+  };
+
+  const finishDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const origin = dragOriginRef.current;
+    if (!origin) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    dragOriginRef.current = null;
+    setDragging(false);
+    if (origin.moved) {
+      const deltaY = e.clientY - origin.startY;
+      const finalHeight = clampArchHeight(origin.startHeight + deltaY);
+      if (finalHeight !== null) {
+        setArchHeight(finalHeight);
+        updateLayoutPrefs({ archHeight: finalHeight });
+      }
+    }
+  };
+
   const judgeActive = activeStep !== null && DECISION_STEPS.has(activeStep);
   const notepadActive =
     hasNotepad &&
@@ -118,13 +186,43 @@ export function PipelineBar({ activeStep, judge, hasNotepad }: PipelineBarProps)
       activeStep === "pages" ||
       activeStep === "passages");
 
+  const customSvgStyle: CSSProperties | undefined =
+    archHeight !== null
+      ? {
+          height: `${archHeight}px`,
+          width: `${Math.round(archHeight * ARCH_ASPECT_RATIO)}px`,
+          maxWidth: "none",
+          maxHeight: "none",
+          flexShrink: 0,
+        }
+      : undefined;
+
   return (
-    <div className="arch-container" aria-label="DecisionRAG Architecture">
-      <svg
-        className="arch-svg"
-        viewBox="0 0 1040 226"
-        shapeRendering="geometricPrecision"
-      >
+    <div
+      className={`arch-shell ${dragging ? "arch-shell-dragging" : ""}`}
+      aria-label="DecisionRAG Architecture"
+    >
+      {archHeight !== null && (
+        <div className="arch-toolbar">
+          <span className="mono-xs">{archHeight}px</span>
+          <button
+            type="button"
+            className="btn-ghost btn-xs"
+            onClick={handleResetSize}
+          >
+            Reset size
+          </button>
+        </div>
+      )}
+
+      <div className="arch-viewport">
+        <svg
+          ref={svgRef}
+          className="arch-svg"
+          style={customSvgStyle}
+          viewBox="0 0 1040 226"
+          shapeRendering="geometricPrecision"
+        >
         {/* ===============================================================
             1. SESSION NOTEPAD FEEDBACK LOOP (Top Lane)
             =============================================================== */}
@@ -314,6 +412,22 @@ export function PipelineBar({ activeStep, judge, hasNotepad }: PipelineBarProps)
           active={judgeActive}
         />
       </svg>
+      </div>
+
+      <div
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Drag to resize architecture diagram (double-click to reset)"
+        title="Drag to resize architecture diagram · Double-click to reset"
+        className="arch-resize-handle"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={finishDrag}
+        onPointerCancel={finishDrag}
+        onDoubleClick={handleResetSize}
+      >
+        <span className="arch-resize-grip" aria-hidden="true" />
+      </div>
     </div>
   );
 }
