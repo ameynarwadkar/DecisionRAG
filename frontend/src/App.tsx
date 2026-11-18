@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   api,
   isJudgeReady,
@@ -12,6 +18,7 @@ import { SettingsDrawer } from "./components/SettingsDrawer";
 import { Sidebar } from "./components/Sidebar";
 import { TelemetryPanel } from "./components/TelemetryPanel";
 import { Workbench } from "./components/Workbench";
+import { loadLayoutPrefs, updateLayoutPrefs } from "./layoutPrefs";
 import type {
   ChatMessageEntry,
   DocumentPageRead,
@@ -42,6 +49,28 @@ export function App() {
     loadLocalSettings()
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [leftCollapsed, setLeftCollapsed] = useState<boolean>(
+    () => loadLayoutPrefs().leftCollapsed
+  );
+  const [rightCollapsed, setRightCollapsed] = useState<boolean>(
+    () => loadLayoutPrefs().rightCollapsed
+  );
+
+  const toggleLeftSidebar = () => {
+    setLeftCollapsed((prev) => {
+      const next = !prev;
+      updateLayoutPrefs({ leftCollapsed: next });
+      return next;
+    });
+  };
+
+  const toggleRightSidebar = () => {
+    setRightCollapsed((prev) => {
+      const next = !prev;
+      updateLayoutPrefs({ rightCollapsed: next });
+      return next;
+    });
+  };
 
   // Health & Top-bar navigation config
   const [judges, setJudges] = useState<JudgeStatusInfo[]>([]);
@@ -585,8 +614,18 @@ export function App() {
 
       {(busyRun || busyUpload || busyCluster) && <PixelScanBar />}
 
-      <div className="workspace-grid">
+      <div
+        className="workspace-grid"
+        style={
+          {
+            "--left-col": leftCollapsed ? "32px" : "270px",
+            "--right-col": rightCollapsed ? "32px" : "290px",
+          } as CSSProperties
+        }
+      >
         <Sidebar
+          collapsed={leftCollapsed}
+          onToggleCollapse={toggleLeftSidebar}
           namespaces={namespaces}
           activeNamespaceId={activeNamespaceId}
           namespaceDetail={namespaceDetail}
@@ -647,6 +686,8 @@ export function App() {
         />
 
         <TelemetryPanel
+          collapsed={rightCollapsed}
+          onToggleCollapse={toggleRightSidebar}
           telemetry={telemetry}
           generatorLatencyMs={generatorLatencyMs}
           notepadPageIds={notepadPageIds}

@@ -8,6 +8,8 @@ import type {
 import { PixelMatrixSpinner } from "./PixelArt";
 
 interface SidebarProps {
+  collapsed: boolean;
+  onToggleCollapse: () => void;
   namespaces: NamespaceRead[];
   activeNamespaceId: string | null;
   namespaceDetail: NamespaceDetailRead | null;
@@ -32,6 +34,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({
+  collapsed,
+  onToggleCollapse,
   namespaces,
   activeNamespaceId,
   namespaceDetail,
@@ -69,8 +73,44 @@ export function Sidebar({
     (namespaceDetail?.categories || []).map((c) => [c.id, c.name])
   );
 
+  if (collapsed) {
+    return (
+      <aside
+        className="sidebar sidebar-rail"
+        onClick={onToggleCollapse}
+        role="button"
+        tabIndex={0}
+        aria-label="Expand corpus sidebar"
+        title="Expand corpus sidebar"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggleCollapse();
+          }
+        }}
+      >
+        <span className="rail-toggle-glyph" aria-hidden="true">
+          &raquo;
+        </span>
+        <span className="rail-label">Corpus · {documents.length}</span>
+      </aside>
+    );
+  }
+
   return (
     <aside className="sidebar">
+      <div className="panel-collapse-bar">
+        <span className="eyebrow">Corpus</span>
+        <button
+          type="button"
+          className="btn-ghost btn-xs"
+          aria-label="Collapse corpus sidebar"
+          title="Collapse corpus sidebar"
+          onClick={onToggleCollapse}
+        >
+          &laquo;
+        </button>
+      </div>
       <div className="panel-block">
         <div className="section-title-row">
           <span className="eyebrow">Namespace</span>

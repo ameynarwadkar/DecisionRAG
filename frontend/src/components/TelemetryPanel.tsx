@@ -1,6 +1,8 @@
 import type { DocumentPageRead, NavigationTelemetry } from "../types";
 
 interface TelemetryPanelProps {
+  collapsed: boolean;
+  onToggleCollapse: () => void;
   telemetry: NavigationTelemetry | null;
   generatorLatencyMs?: number | null;
   notepadPageIds: string[];
@@ -19,6 +21,8 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 export function TelemetryPanel({
+  collapsed,
+  onToggleCollapse,
   telemetry,
   generatorLatencyMs,
   notepadPageIds,
@@ -27,8 +31,47 @@ export function TelemetryPanel({
 }: TelemetryPanelProps) {
   const docMap = new Map(documents.map((d) => [d.id, d]));
 
+  if (collapsed) {
+    const summary = telemetry
+      ? `Telemetry · ${telemetry.total_latency_ms.toFixed(0)}ms`
+      : "Telemetry";
+    return (
+      <aside
+        className="telemetry-panel sidebar-rail"
+        onClick={onToggleCollapse}
+        role="button"
+        tabIndex={0}
+        aria-label="Expand telemetry panel"
+        title="Expand telemetry panel"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggleCollapse();
+          }
+        }}
+      >
+        <span className="rail-toggle-glyph" aria-hidden="true">
+          &laquo;
+        </span>
+        <span className="rail-label">{summary}</span>
+      </aside>
+    );
+  }
+
   return (
     <aside className="telemetry-panel">
+      <div className="panel-collapse-bar">
+        <span className="eyebrow">Telemetry</span>
+        <button
+          type="button"
+          className="btn-ghost btn-xs"
+          aria-label="Collapse telemetry panel"
+          title="Collapse telemetry panel"
+          onClick={onToggleCollapse}
+        >
+          &raquo;
+        </button>
+      </div>
       <div className="panel-block">
         <span className="eyebrow">Stages</span>
         {!telemetry ? (
