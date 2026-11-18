@@ -10,7 +10,7 @@ import type {
 } from "../types";
 import { ApiFallbackCard } from "./ApiFallbackCard";
 import { PipelineBar } from "./PipelineBar";
-import { PixelMatrixSpinner, PixelScanBar } from "./PixelArt";
+import { PixelMatrixSpinner } from "./PixelArt";
 
 interface WorkbenchProps {
   mode: WorkbenchMode;
@@ -20,6 +20,7 @@ interface WorkbenchProps {
   hasNotepad: boolean;
   hasNamespace: boolean;
   hasDocuments: boolean;
+  isDemoCorpus?: boolean;
   busyUpload: boolean;
   busyRun: boolean;
   errorBanner: string | null;
@@ -56,6 +57,21 @@ const COMPARE_JUDGE_OPTIONS: JudgeId[] = [
   "openrouter_jev",
   "openrouter_luna",
   "openai_luna",
+];
+
+const DEMO_QUERIES = [
+  {
+    short: "EU outage + strict_eu_lock?",
+    full: "What happens during an EU outage when strict_eu_lock is enabled, and does any data still reach us-east-1?",
+  },
+  {
+    short: "Burst quota & KV cache discount?",
+    full: "How long can a Growth workspace burst above baseline RPM, and how are cached prefix tokens billed?",
+  },
+  {
+    short: "Do strict_eu_lock 503s earn SLA credit?",
+    full: "Can we claim monthly SLA service credits for 503 RegionalCapacityExhausted responses caused by strict_eu_lock?",
+  },
 ];
 
 function renderCitedText(
@@ -126,6 +142,57 @@ function PassageScoreCard({
   );
 }
 
+function RankedPassageSection({
+  items,
+  highlightedRank,
+  forceOpenMore,
+}: {
+  items: RankedPassageItem[];
+  highlightedRank: number | null;
+  forceOpenMore: boolean;
+}) {
+  const [openMore, setOpenMore] = useState(false);
+  const topThree = items.slice(0, 3);
+  const rest = items.slice(3);
+  const isExpanded = openMore || forceOpenMore;
+
+  return (
+    <div className="results-section">
+      <span className="eyebrow">Top Passages ({Math.min(3, items.length)} of {items.length})</span>
+      <div className="passage-list">
+        {topThree.map((item) => (
+          <PassageScoreCard
+            key={item.passage_id}
+            item={item}
+            highlighted={highlightedRank === item.rank}
+          />
+        ))}
+      </div>
+
+      {rest.length > 0 && (
+        <details
+          className="more-dropdown"
+          open={isExpanded}
+          onToggle={(e) => setOpenMore((e.currentTarget as HTMLDetailsElement).open)}
+        >
+          <summary className="more-dropdown-summary">
+            Other {rest.length} passages (#4–#{items.length})
+          </summary>
+          <div className="more-dropdown-body">
+            {rest.map((item) => (
+              <PassageScoreCard
+                key={item.passage_id}
+                item={item}
+                highlighted={highlightedRank === item.rank}
+              />
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
 export function Workbench({
   mode,
   onChangeMode,
@@ -134,6 +201,7 @@ export function Workbench({
   hasNotepad,
   hasNamespace,
   hasDocuments,
+  isDemoCorpus,
   busyUpload,
   busyRun,
   errorBanner,
@@ -170,8 +238,10 @@ export function Workbench({
 
   const jumpToRank = (rank: number) => {
     setHighlightedRank(rank);
-    const el = document.getElementById(`passage-rank-${rank}`);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`passage-rank-${rank}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
   };
 
   const handleMainSubmit = async (e: React.FormEvent) => {
@@ -343,19 +413,27 @@ export function Workbench({
             </button>
           </form>
 
-          {rankedPassages.length > 0 && (
-            <div className="results-section">
-              <span className="eyebrow">Passages ({rankedPassages.length})</span>
-              <div className="passage-list">
-                {rankedPassages.map((item) => (
-                  <PassageScoreCard
-                    key={item.passage_id}
-                    item={item}
-                    highlighted={highlightedRank === item.rank}
-                  />
-                ))}
-              </div>
+          {isDemoCorpus && chatMessages.length === 0 && (
+            <div className="compare-judge-picker">
+              {DEMO_QUERIES.map((dq) => (
+                <button
+                  key={dq.short}
+                  type="button"
+                  className="btn-secondary btn-xs"
+                  onClick={() => setChatInput(dq.full)}
+                >
+                  {dq.short}
+                </button>
+              ))}
             </div>
+          )}
+
+          {rankedPassages.length > 0 && (
+            <RankedPassageSection
+              items={rankedPassages}
+              highlightedRank={highlightedRank}
+              forceOpenMore={highlightedRank !== null && highlightedRank > 3}
+            />
           )}
         </div>
       ) : (
@@ -383,6 +461,21 @@ export function Workbench({
               onChange={(e) => setQueryText(e.target.value)}
               disabled={!hasDocuments || busyRun}
             />
+
+            {isDemoCorpus && (
+              <div className="compare-judge-picker">
+                {DEMO_QUERIES.map((dq) => (
+                  <button
+                    key={dq.short}
+                    type="button"
+                    className="btn-secondary btn-xs"
+                    onClick={() => setQueryText(dq.full)}
+                  >
+                    {dq.short}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {showScenario && (
               <input
@@ -412,10 +505,9 @@ export function Workbench({
                   (mode === "compare" && selectedCompareJudges.length === 0)
                 }
               >
-                {busyRun ? <PixelMatrixSpinner label="Navigating" /> : "Run"}
+                {busyRun ? <PixelMatrixSpinner label="Running" /> : "Run"}
               </button>
             </div>
-            {busyRun && <PixelScanBar />}
           </form>
 
           {mode === "compare" ? (
@@ -430,15 +522,11 @@ export function Workbench({
                         {entry.telemetry.total_requests}r
                       </span>
                     </div>
-                    <div className="passage-list">
-                      {entry.passages.slice(0, 5).map((p) => (
-                        <PassageScoreCard
-                          key={p.passage_id}
-                          item={p}
-                          highlighted={false}
-                        />
-                      ))}
-                    </div>
+                    <RankedPassageSection
+                      items={entry.passages}
+                      highlightedRank={null}
+                      forceOpenMore={false}
+                    />
                   </div>
                 ))}
               </div>
@@ -455,20 +543,11 @@ export function Workbench({
               )}
 
               {rankedPassages.length > 0 && (
-                <div className="results-section">
-                  <span className="eyebrow">
-                    Passages ({rankedPassages.length})
-                  </span>
-                  <div className="passage-list">
-                    {rankedPassages.map((item) => (
-                      <PassageScoreCard
-                        key={item.passage_id}
-                        item={item}
-                        highlighted={highlightedRank === item.rank}
-                      />
-                    ))}
-                  </div>
-                </div>
+                <RankedPassageSection
+                  items={rankedPassages}
+                  highlightedRank={highlightedRank}
+                  forceOpenMore={highlightedRank !== null && highlightedRank > 3}
+                />
               )}
             </>
           )}

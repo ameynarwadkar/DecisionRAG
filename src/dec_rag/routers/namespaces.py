@@ -18,6 +18,7 @@ from dec_rag.schemas import (
     NamespaceRead,
 )
 from dec_rag.services.clustering import build_page_clusters
+from dec_rag.services.demo_seed import ensure_demo_corpus
 from dec_rag.services.ingestion import slugify
 from dec_rag.schemas import apply_runtime_credentials
 
@@ -92,6 +93,20 @@ async def create_namespace(
     db.add(ns)
     await db.commit()
     await db.refresh(ns)
+    return await _populate_namespace_counts(db, ns)
+
+
+@router.post("/seed-demo", response_model=NamespaceRead, status_code=status.HTTP_201_CREATED)
+async def seed_demo_namespace(
+    auth: AuthContext = Depends(require_api_key),
+    db: AsyncSession = Depends(get_db),
+) -> NamespaceRead:
+    if auth.namespace_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Namespace-scoped API keys cannot create demo namespaces.",
+        )
+    ns = await ensure_demo_corpus(db)
     return await _populate_namespace_counts(db, ns)
 
 

@@ -199,6 +199,8 @@ export function App() {
         setNamespaces(nsList);
         setActiveNamespaceId((prev) => {
           if (prev && nsList.some((n) => n.id === prev)) return prev;
+          const demoNs = nsList.find((n) => n.slug === "cloud-platform-docs");
+          if (demoNs) return demoNs.id;
           return nsList.length > 0 ? nsList[0].id : null;
         });
       } catch (err) {
@@ -649,6 +651,7 @@ export function App() {
           hasNotepad={mode === "chat" && notepadPageIds.length > 0}
           hasNamespace={Boolean(activeNamespaceId)}
           hasDocuments={documents.length > 0}
+          isDemoCorpus={namespaceDetail?.slug === "cloud-platform-docs"}
           busyUpload={busyUpload}
           busyRun={busyRun}
           errorBanner={errorBanner}

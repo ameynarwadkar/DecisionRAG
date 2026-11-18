@@ -252,7 +252,7 @@ export function Sidebar({
           <p className="empty-hint">Empty.</p>
         ) : (
           <div className="doc-list">
-            {documents.map((doc) => {
+            {documents.slice(0, 3).map((doc) => {
               const catName = doc.category_id
                 ? categoryMap.get(doc.category_id)
                 : null;
@@ -278,6 +278,42 @@ export function Sidebar({
                 </div>
               );
             })}
+
+            {documents.length > 3 && (
+              <details className="more-dropdown">
+                <summary className="more-dropdown-summary">
+                  +{documents.length - 3} more documents
+                </summary>
+                <div className="more-dropdown-body">
+                  {documents.slice(3).map((doc) => {
+                    const catName = doc.category_id
+                      ? categoryMap.get(doc.category_id)
+                      : null;
+                    return (
+                      <div key={doc.id} className="doc-item">
+                        <div
+                          className="doc-item-main"
+                          onClick={() => onInspectPage(doc)}
+                        >
+                          <div className="doc-item-title">{doc.title}</div>
+                          <div className="doc-item-sub">
+                            {catName && <span className="pill-cat">{catName}</span>}
+                            <span>{doc.passage_count} ¶</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-ghost btn-xs"
+                          onClick={() => void onDeletePage(doc.id)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </details>
+            )}
           </div>
         )}
       </div>

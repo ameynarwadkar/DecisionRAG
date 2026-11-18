@@ -48,11 +48,12 @@ function ArchBox({ x, y, w, h, label, sublabel, active, dashed }: ArchBoxProps) 
     <g className={`arch-node ${active ? "arch-node-active" : ""}`}>
       {active && (
         <rect
-          x={x + 3}
-          y={y + 3}
-          width={w}
-          height={h}
-          className="arch-shadow"
+          x={x - 3}
+          y={y - 3}
+          width={w + 6}
+          height={h + 6}
+          rx={5}
+          className="arch-pulse-ring"
         />
       )}
       <rect
@@ -63,17 +64,8 @@ function ArchBox({ x, y, w, h, label, sublabel, active, dashed }: ArchBoxProps) 
         rx={3}
         className={`arch-rect ${dashed ? "arch-rect-dashed" : ""}`}
       />
-      {active && (
-        <rect
-          x={x + 7}
-          y={cy - 3}
-          width={6}
-          height={6}
-          className="arch-active-pixel"
-        />
-      )}
       <text
-        x={active ? cx + 4 : cx}
+        x={cx}
         y={sublabel ? cy - 3 : cy + 1}
         textAnchor="middle"
         dominantBaseline="middle"
@@ -83,7 +75,7 @@ function ArchBox({ x, y, w, h, label, sublabel, active, dashed }: ArchBoxProps) 
       </text>
       {sublabel && (
         <text
-          x={active ? cx + 4 : cx}
+          x={cx}
           y={cy + 9}
           textAnchor="middle"
           dominantBaseline="middle"

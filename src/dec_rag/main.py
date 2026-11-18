@@ -7,9 +7,10 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from dec_rag.config import Settings, get_settings
-from dec_rag.database import init_db
+from dec_rag.database import AsyncSessionLocal, init_db
 from dec_rag.routers import api_keys, documents, judges, namespaces, retrieval, runs
 from dec_rag.schemas import HealthResponse
+from dec_rag.services.demo_seed import ensure_demo_corpus
 from dec_rag.services.generator import is_generator_configured, resolve_litellm_params
 from dec_rag.services.judges import DecisionJudgeError, list_judge_statuses
 
@@ -19,6 +20,9 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     await init_db()
+    if get_settings().SEED_DEMO_CORPUS:
+        async with AsyncSessionLocal() as session:
+            await ensure_demo_corpus(session)
     yield
 
 

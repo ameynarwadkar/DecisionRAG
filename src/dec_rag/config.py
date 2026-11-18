@@ -72,8 +72,9 @@ class Settings(BaseSettings):
     CLUSTER_EMBEDDING_MODEL: str = "text-embedding-3-small"
     CLUSTER_SUMMARY_MODEL: str = "openai/gpt-4o-mini"
 
-    # Parser Limits
+    # Parser & Demo Seeding
     MAX_PASSAGE_CHARS: int = Field(default=1200, ge=200)
+    SEED_DEMO_CORPUS: bool = True
 
 
 _cached_settings: Settings | None = None
