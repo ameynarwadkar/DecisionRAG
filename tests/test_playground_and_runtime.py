@@ -203,3 +203,6 @@ async def test_playground_ui_and_compiled_typescript_assets_served(
     css_resp = await client.get(css_match.group(1))
     assert css_resp.status_code == 200
     assert "--bg-base" in css_resp.text
+    assert ".sidebar-rail" in css_resp.text
+    assert ".arch-resize-handle" in css_resp.text
+    assert ".api-fallback-header" in css_resp.text

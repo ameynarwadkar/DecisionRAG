@@ -561,6 +561,45 @@ button:disabled {
   box-shadow: 3px 3px 0 var(--fg);
 }
 
+.api-fallback-collapsed {
+  padding: 8px 12px;
+}
+
+.api-fallback-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.api-fallback-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  padding: 2px 0;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.api-fallback-pills,
+.api-fallback-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.api-fallback-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .fallback-group {
   display: flex;
   flex-direction: column;

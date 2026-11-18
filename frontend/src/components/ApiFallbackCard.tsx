@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { JudgeId, LocalClientSettings } from "../types";
 import { PixelMatrixSpinner } from "./PixelArt";
 
@@ -30,6 +30,11 @@ export function ApiFallbackCard({
   onDismissGenerator,
 }: ApiFallbackCardProps) {
   const [draft, setDraft] = useState<LocalClientSettings>(settings);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    setDraft(settings);
+  }, [settings]);
 
   if (!needsJudge && !needsGenerator) return null;
 
@@ -39,20 +44,62 @@ export function ApiFallbackCard({
   };
 
   return (
-    <form className="api-fallback-card" onSubmit={handleSubmit}>
-      <div className="row-between">
-        <span className="eyebrow">API Input (.env missing or unreachable)</span>
+    <div
+      className={`api-fallback-card ${
+        expanded ? "api-fallback-expanded" : "api-fallback-collapsed"
+      }`}
+    >
+      <div className="api-fallback-header">
         <button
           type="button"
-          className="btn-ghost btn-xs"
-          disabled={verifying}
-          onClick={() => void onRecheckEnv()}
+          className="api-fallback-toggle"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
         >
-          Re-read .env
+          <span className="mono-xs" aria-hidden="true">
+            {expanded ? "▾" : "▸"}
+          </span>
+          <span className="eyebrow">
+            API Input (.env missing or unreachable)
+          </span>
+          {!expanded && (
+            <span className="api-fallback-pills">
+              {needsJudge && (
+                <span className="score-pill">
+                  Judge: {judgeReason || "Needed"}
+                </span>
+              )}
+              {needsGenerator && (
+                <span className="score-pill">
+                  Gen: {generatorReason || "Needed"}
+                </span>
+              )}
+            </span>
+          )}
         </button>
+
+        <div className="api-fallback-actions">
+          <button
+            type="button"
+            className="btn-ghost btn-xs"
+            disabled={verifying}
+            onClick={() => void onRecheckEnv()}
+          >
+            Re-read .env
+          </button>
+          <button
+            type="button"
+            className="btn-ghost btn-xs"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded ? "Collapse" : "Configure"}
+          </button>
+        </div>
       </div>
 
-      {needsJudge && (
+      {expanded && (
+        <form className="api-fallback-body" onSubmit={handleSubmit}>
+          {needsJudge && (
         <div className="fallback-group">
           <div className="row-between">
             <strong>Decision Judge</strong>
@@ -172,6 +219,8 @@ export function ApiFallbackCard({
           {verifying ? <PixelMatrixSpinner label="Verifying" /> : "Verify & Use"}
         </button>
       </div>
-    </form>
+        </form>
+      )}
+    </div>
   );
 }

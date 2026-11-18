@@ -203,6 +203,7 @@ def test_get_settings_hot_reloads_modified_dotenv(
 
     fake_env = tmp_path / ".env"
     fake_env.write_text("CLEF_API_URL=https://first-tunnel.example.com\n", encoding="utf-8")
+    monkeypatch.delenv("CLEF_API_URL", raising=False)
     monkeypatch.setattr(config_mod, "resolve_env_file", lambda: fake_env)
 
     s1 = config_mod.get_settings()
